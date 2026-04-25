@@ -1,0 +1,30 @@
+# Development dependencies and generated local output
+node_modules/
+coverage/
+data/
+*.log
+
+# Source, tests, examples and local tooling are not published.
+# The package publishes the compiled build from dist/.
+src/
+tests/
+examples/
+scripts/
+
+# TypeScript/test configuration
+tsconfig*.json
+vitest.config.ts
+
+# Repository/editor metadata
+.git/
+.gitignore
+.npmignore
+.env
+.env.*
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519

@@ -1,0 +1,47 @@
+{
+  "name": "segmentstore",
+  "version": "0.1.0",
+  "description": "SegmentStore is a tiny pure TypeScript segmented local database for Node.js and NW.js.",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.esm.json && tsc -p tsconfig.cjs.json && node scripts/write-package-types.cjs",
+    "example:basic": "tsx examples/basic.ts",
+    "example:banco-dados": "tsx examples/banco_dados.ts",
+    "example:import-database": "tsx examples/import_database.ts",
+    "example:segmented": "tsx examples/segmented.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "database",
+    "local",
+    "segmented",
+    "storage",
+    "typescript",
+    "json",
+    "orm",
+    "nwjs"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "rimraf": "^6.1.3",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
+  }
+}
