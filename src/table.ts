@@ -151,9 +151,13 @@ export class Table<S extends SchemaDefinition> {
   }
 
   async update(filter: WhereInput<S>, changes: UpdateInput<S>): Promise<number> {
+    const conditions = this.createConditionsFromFilter(filter, "update filter");
+    return this.runUpdate({ conditions, skip: 0 }, changes);
+  }
+
+  async runUpdate(execution: QueryExecution<S>, changes: UpdateInput<S>): Promise<number> {
     this.database.assertOpen();
     await this.ensureLoaded();
-    this.assertNoUnknownKeys(filter, "update filter");
     this.assertNoUnknownKeys(changes, "update changes");
 
     const patch = this.normalizePatch(changes);
@@ -161,7 +165,7 @@ export class Table<S extends SchemaDefinition> {
       return 0;
     }
 
-    const indices = this.findMatchingIndices(this.conditionsFromFilter(filter));
+    const indices = this.findExecutionIndices(execution);
     if (indices.length === 0) {
       return 0;
     }
@@ -241,26 +245,7 @@ export class Table<S extends SchemaDefinition> {
   async runQuery(execution: QueryExecution<S>): Promise<Array<RowOf<S>>> {
     this.database.assertOpen();
     await this.ensureLoaded();
-    let indices = this.findMatchingIndices(execution.conditions);
-
-    if (execution.order) {
-      const order = execution.order;
-      indices = [...indices].sort((leftIndex, rightIndex) => {
-        const left = this.rows[leftIndex];
-        const right = this.rows[rightIndex];
-        if (!left || !right) {
-          return 0;
-        }
-
-        const result = compareValues(left[order.field], right[order.field]);
-        return order.direction === "asc" ? result : -result;
-      });
-    }
-
-    const start = execution.skip;
-    const end = execution.take === undefined ? undefined : start + execution.take;
-    return indices
-      .slice(start, end)
+    return this.findExecutionIndices(execution)
       .map((index) => {
         const row = this.rows[index];
         if (!row) {
@@ -320,6 +305,14 @@ export class Table<S extends SchemaDefinition> {
     if (!Object.prototype.hasOwnProperty.call(this.schema.fields, field)) {
       throw new SchemaError(`Unknown field "${field}" in table "${this.name}".`);
     }
+  }
+
+  createConditionsFromFilter(filter: WhereInput<S>, context?: string): QueryCondition<S>[] {
+    if (context) {
+      this.assertNoUnknownKeys(filter, context);
+    }
+
+    return this.conditionsFromFilter(filter);
   }
 
   createSnapshot(): TableSnapshot {
@@ -466,6 +459,28 @@ export class Table<S extends SchemaDefinition> {
       }
       return [this.createCondition(field as keyof S & string, "=", value as FieldRuntimeValue<S[keyof S]>)];
     });
+  }
+
+  private findExecutionIndices(execution: QueryExecution<S>): number[] {
+    let indices = this.findMatchingIndices(execution.conditions);
+
+    if (execution.order) {
+      const order = execution.order;
+      indices = [...indices].sort((leftIndex, rightIndex) => {
+        const left = this.rows[leftIndex];
+        const right = this.rows[rightIndex];
+        if (!left || !right) {
+          return 0;
+        }
+
+        const result = compareValues(left[order.field], right[order.field]);
+        return order.direction === "asc" ? result : -result;
+      });
+    }
+
+    const start = execution.skip;
+    const end = execution.take === undefined ? undefined : start + execution.take;
+    return indices.slice(start, end);
   }
 
   private findMatchingIndices(conditions: QueryCondition<S>[]): number[] {

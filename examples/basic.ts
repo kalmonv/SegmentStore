@@ -72,7 +72,7 @@ const adults = await users
 
 console.log("Adult users:", adults);
 
-await users.update(
+await users.where("age", "=", 25).update(
   { email: "ana@example.com" },
   { name: "Ana Maria", age: 26 }
 );

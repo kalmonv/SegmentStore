@@ -83,4 +83,47 @@ describe("Query", () => {
       await temp.cleanup();
     }
   });
+
+  it("supports update after where conditions", async () => {
+    const temp = await createTempDb();
+
+    try {
+      const db = await Database.open(temp.filePath);
+      const users = db.table("users", userSchema());
+
+      await users.insert({ name: "Ana", email: "ana@example.com", age: 25 });
+      await users.insert({ name: "Bruno", email: "bruno@example.com", age: 17 });
+      await users.insert({ name: "Carla", email: "carla@example.com", age: 31 });
+
+      await expect(users
+        .where("age", "=", 25)
+        .update(
+          { email: "ana@example.com" },
+          { name: "Ana Maria", age: 26 }
+        )).resolves.toBe(1);
+
+      await expect(users.find({ email: "ana@example.com" })).resolves.toMatchObject([
+        { name: "Ana Maria", age: 26 }
+      ]);
+
+      await expect(users
+        .where("age", "<", 18)
+        .update(
+          { email: "ana@example.com" },
+          { name: "Ana Bloqueada" }
+        )).resolves.toBe(0);
+
+      await expect(users
+        .where("age", ">=", 30)
+        .update({ active: false })).resolves.toBe(1);
+
+      await expect(users.find({ email: "carla@example.com" })).resolves.toMatchObject([
+        { active: false }
+      ]);
+
+      await db.close();
+    } finally {
+      await temp.cleanup();
+    }
+  });
 });

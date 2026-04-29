@@ -7,7 +7,9 @@ import type {
   QueryCondition,
   QueryOrder,
   RowOf,
-  SchemaDefinition
+  SchemaDefinition,
+  UpdateInput,
+  WhereInput
 } from "./types.js";
 
 export class Query<S extends SchemaDefinition> {
@@ -105,5 +107,25 @@ export class Query<S extends SchemaDefinition> {
       take: this.take,
       skip: this.skip
     });
+  }
+
+  update(changes: UpdateInput<S>): Promise<number>;
+  update(filter: WhereInput<S>, changes: UpdateInput<S>): Promise<number>;
+  async update(
+    filterOrChanges: WhereInput<S> | UpdateInput<S>,
+    maybeChanges?: UpdateInput<S>
+  ): Promise<number> {
+    const hasFilter = maybeChanges !== undefined;
+    const extraConditions = hasFilter
+      ? this.table.createConditionsFromFilter(filterOrChanges as WhereInput<S>, "update filter")
+      : [];
+    const changes = hasFilter ? maybeChanges : filterOrChanges as UpdateInput<S>;
+
+    return this.table.runUpdate({
+      conditions: [...this.conditions, ...extraConditions],
+      order: this.order,
+      take: this.take,
+      skip: this.skip
+    }, changes);
   }
 }

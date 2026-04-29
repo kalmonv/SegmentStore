@@ -47,7 +47,7 @@ const adults = await users
   .offset(0)
   .find();
 
-await users.update(
+await users.where("age", "=", 0).update(
   { email: "ana@example.com" },
   { age: 25 }
 );
@@ -109,7 +109,7 @@ Responsabilidades:
 - `types.ts`: inferência de `RowOf`, `InsertInput`, `UpdateInput` e filtros.
 - `schema.ts`: validação e resolução do schema.
 - `table.ts`: insert, update, delete, find, validação, defaults e constraints.
-- `query.ts`: query builder encadeável com `where`, `orderBy`, `limit` e `offset`.
+- `query.ts`: query builder encadeável com `where`, `orderBy`, `limit`, `offset` e `update`.
 - `storage/segmented-storage-engine.ts`: diretório por banco, segmentos por tabela, carregamento lazy de tabelas e criptografia opcional por senha.
 - `index/index-manager.ts`: índices em memória reconstruídos a partir dos registros.
 
